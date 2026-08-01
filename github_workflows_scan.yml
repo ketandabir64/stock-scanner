@@ -1,0 +1,40 @@
+name: 📊 Daily Stock Scanner
+
+on:
+  schedule:
+    # Runs at 8:15 AM IST (2:45 AM UTC) every weekday (Mon-Fri)
+    - cron: '45 2 * * 1-5'
+
+  # Allows manual trigger from GitHub website (optional)
+  workflow_dispatch:
+
+jobs:
+  scan-and-email:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install yfinance pandas numpy openpyxl
+
+    - name: Run Stock Scanner
+      env:
+        SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+        SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+        RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+      run: python combined_stock_scanner_with_email.py
+
+    - name: Upload Excel as artifact (backup)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: scanner-results
+        path: Combined_Scanner_*.xlsx
